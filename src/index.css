@@ -1,0 +1,95 @@
+/* Existing styles */
+
+/* Carousel Styles */
+.slick-dots {
+  bottom: -40px;
+}
+
+.slick-dots li button:before {
+  font-size: 10px;
+  color: #3182CE;
+  opacity: 0.3;
+  transition: all 0.3s ease;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #3182CE;
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.slick-prev:before,
+.slick-next:before {
+  display: none;
+}
+
+.slick-slider {
+  margin: 0 30px;
+  padding-bottom: 50px;
+}
+
+/* Add smooth transitions */
+.slick-slide {
+  transition: all 0.3s ease;
+  padding: 10px;
+}
+
+/* Ensure proper spacing between slides */
+.slick-slide > div {
+  height: 100%;
+}
+
+/* Custom scrollbar for the carousel */
+.slick-track {
+  margin-left: 0;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .slick-dots li button:before {
+  color: #63B3ED;
+}
+
+[data-theme="dark"] .slick-dots li.slick-active button:before {
+  color: #63B3ED;
+}
+
+/* Animation classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.book-card-enter {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Add smooth transitions */
+.slick-slide {
+  transition: transform 0.3s ease;
+}
+
+.slick-slide:hover {
+  transform: scale(1.02);
+}
+
+/* Ensure proper spacing between slides */
+.slick-slide > div {
+  margin: 0 8px;
+}
+
+/* Ensure arrows are visible on dark theme */
+[data-theme="dark"] .slick-prev,
+[data-theme="dark"] .slick-next {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .slick-prev:hover,
+[data-theme="dark"] .slick-next:hover {
+  background: rgba(255, 255, 255, 0.2);
+} 
