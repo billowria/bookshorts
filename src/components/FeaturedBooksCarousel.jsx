@@ -260,13 +260,13 @@ function FeaturedBooksCarousel({ books, bookmarks, onBookmarkToggle }) {
   const settings = {
     dots: true,
     infinite: true,
-    speed: 500,
+    speed:2500,
     slidesToShow: slidesToShow,
     slidesToScroll: 1,
     prevArrow: <PrevArrow />,
     nextArrow: <NextArrow />,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 500,
     cssEase: "linear",
     pauseOnHover: true,
     responsive: [
@@ -302,19 +302,29 @@ function FeaturedBooksCarousel({ books, bookmarks, onBookmarkToggle }) {
   };
 
   return (
-    <Box position="relative" px={8} py={4}>
+    <Box 
+      position="relative" 
+      px={{ base: 4, md: 8, lg: 12 }} 
+      py={4}
+      mx="auto"
+      maxW="100vw"
+      overflow="hidden"
+    >
       <Box
         sx={{
           '.slick-track': {
             display: 'flex',
-            gap: '20px',
+            gap: { base: '10px', md: '20px' },
           },
           '.slick-slide': {
-            px: 2,
+            px: { base: 1, md: 2 },
           },
           '.slick-list': {
-            mx: '-20px',
-            overflow: 'visible',
+            mx: { base: '-10px', md: '-20px' },
+            overflow: 'hidden',
+          },
+          '.slick-arrow': {
+            display: { base: 'none', md: 'block' }
           }
         }}
       >
@@ -325,8 +335,8 @@ function FeaturedBooksCarousel({ books, bookmarks, onBookmarkToggle }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              role="group"
+              whileHover={{ scale: 1.02 }}
+              style={{ margin: '0 auto' }}
             >
               <BookCard
                 book={book}

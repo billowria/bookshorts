@@ -73,6 +73,70 @@ import DOMPurify from 'dompurify';
 import ImageUploader from '../../components/ImageUploader';
 
 const MotionBox = motion(Box);
+const MotionPath = motion.path;
+
+// Add this new component for the animated tree
+const AnimatedTree = ({ side = 'left', color = '#38B2AC' }) => (
+  <Box
+    position="absolute"
+    top={0}
+    bottom={0}
+    left={side === 'left' ? 0 : 'auto'}
+    right={side === 'right' ? 0 : 'auto'}
+    width="120px"
+    pointerEvents="none"
+    zIndex={0}
+  >
+    <svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 120 800"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{
+        position: 'absolute',
+        top: 0,
+        [side]: 0,
+        transform: side === 'right' ? 'scaleX(-1)' : 'none'
+      }}
+    >
+      <MotionPath
+        d="M40 800 C40 600 80 500 40 400 C0 300 80 200 40 0"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 2, ease: "easeInOut" }}
+      />
+      {[...Array(12)].map((_, i) => (
+        <MotionBox
+          key={i}
+          as="g"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1 + (i * 0.1), duration: 0.5 }}
+        >
+          <circle
+            cx={40 + (Math.sin(i * 0.5) * 20)}
+            cy={i * 60 + 50}
+            r="4"
+            fill={color}
+          />
+          <MotionPath
+            d={`M${40 + (Math.sin(i * 0.5) * 20)} ${i * 60 + 50} C${60 + (Math.sin(i * 0.5) * 20)} ${i * 60 + 30} ${80 + (Math.sin(i * 0.5) * 20)} ${i * 60 + 50} ${100 + (Math.sin(i * 0.5) * 20)} ${i * 60 + 40}`}
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ delay: 1.5 + (i * 0.1), duration: 1 }}
+          />
+        </MotionBox>
+      ))}
+    </svg>
+  </Box>
+);
 
 const BookManager = () => {
   const [books, setBooks] = useState([]);
@@ -290,7 +354,15 @@ const BookManager = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this book?')) {
       try {
-        // First delete associated content
+        // First delete associated bookmarks
+        const { error: bookmarksError } = await supabase
+          .from('Bookmarks')
+          .delete()
+          .eq('book_id', id);
+          
+        if (bookmarksError) throw bookmarksError;
+
+        // Then delete associated content
         const { error: contentError } = await supabase
           .from('Content')
           .delete()
@@ -298,7 +370,7 @@ const BookManager = () => {
           
         if (contentError) throw contentError;
         
-        // Then delete the book
+        // Finally delete the book
         const { error: bookError } = await supabase
           .from('Books')
           .delete()
@@ -332,32 +404,62 @@ const BookManager = () => {
     onPreviewOpen();
   };
 
-  const handleAddCategory = async () => {
+  const handleAddCategory = async (e) => {
+    e.preventDefault(); // Prevent form default submission
+
     try {
+      // Validate required fields
+      if (!newCategory.name.trim()) {
+        toast({
+          title: 'Validation Error',
+          description: 'Category name is required',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Set loading state
+      setLoading(true);
+
+      console.log('Adding new category:', newCategory); // Debug log
+
       // Get the maximum display_order
-      const { data: maxOrderData } = await supabase
+      const { data: maxOrderData, error: maxOrderError } = await supabase
         .from('Categories')
         .select('display_order')
         .order('display_order', { ascending: false })
         .limit(1);
 
+      if (maxOrderError) {
+        console.error('Error fetching max order:', maxOrderError);
+        throw maxOrderError;
+      }
+
       const newDisplayOrder = maxOrderData && maxOrderData.length > 0 
         ? maxOrderData[0].display_order + 1 
         : 1;
 
+      console.log('New display order:', newDisplayOrder); // Debug log
+
       const { data, error } = await supabase
         .from('Categories')
         .insert([{ 
-          name: newCategory.name,
+          name: newCategory.name.trim(),
           display_order: newDisplayOrder,
           status: true,
-          image_url: newCategory.image_url,
+          image_url: newCategory.image_url || null,
           click_count: 0
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting category:', error);
+        throw error;
+      }
+
 
       toast({
         title: 'Category added',
@@ -367,13 +469,18 @@ const BookManager = () => {
         isClosable: true,
       });
 
-      setCategories([...categories, data]);
+      // Refresh categories list
+      fetchCategories();
+
+      // Reset form
       setNewCategory({ 
         name: '',
         display_order: 1,
         status: true,
         image_url: ''
       });
+      
+      // Close modal
       onCategoryClose();
     } catch (error) {
       console.error('Error adding category:', error);
@@ -384,33 +491,111 @@ const BookManager = () => {
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCoverImageUpload = (url) => {
-    setFormData(prev => ({
-      ...prev,
-      cover_image: url
-    }));
+  const handleCoverImageUpload = async (file) => {
+    try {
+      if (!file) return;
+
+      // Check authentication status
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      if (authError) throw new Error(`Authentication error: ${authError.message}`);
+      if (!session?.user) throw new Error('You must be logged in to upload images');
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please upload an image file');
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
+
+      // Create a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `books/${fileName}`;
+
+      // Upload file to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('book-covers')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          metadata: {
+            userId: session.user.id
+          }
+        });
+
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('book-covers')
+        .getPublicUrl(filePath);
+
+      // Update form data with the image URL
+      setFormData(prev => ({
+        ...prev,
+        cover_image: publicUrl
+      }));
+
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: 'Error uploading image',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleCategoryImageUpload = async (file) => {
     try {
+      if (!file) return;
+
+      // Create a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `categories/${fileName}`;
+
+      // Upload file to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('category-images')
-        .upload(`categories/${file.name}`, file);
+        .from('book-covers')
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const imageUrl = `${supabaseUrl}/storage/v1/object/public/category-images/${uploadData.path}`;
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('book-covers')
+        .getPublicUrl(filePath);
+
+      // Update category form with the image URL
       setNewCategory(prev => ({
         ...prev,
-        image_url: imageUrl
+        image_url: publicUrl
       }));
+
+      toast({
+        title: 'Category image uploaded successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Error uploading category image:', error);
       toast({
-        title: 'Error uploading image',
+        title: 'Error uploading category image',
         description: error.message,
         status: 'error',
         duration: 3000,
@@ -512,33 +697,68 @@ const BookManager = () => {
                       </VStack>
                     </GridItem>
 
-                    <GridItem colSpan={{ base: 12, md: 4 }}>
-                      {formData.cover_image && (
-                        <Box
-                          borderWidth="1px"
-                          borderRadius="lg"
-                          overflow="hidden"
-                          position="relative"
-                        >
-                          <Image
-                            src={formData.cover_image}
-                            alt="Cover preview"
-                            width="full"
-                            height="300px"
-                            objectFit="cover"
-                            fallbackSrc="https://via.placeholder.com/300"
-                          />
-                          <Tag
-                            position="absolute"
-                            top={2}
-                            right={2}
-                            colorScheme="blue"
+                    <GridItem colSpan={{ base: 12, md: 4 }} position="relative">
+                      <Box position="relative" overflow="visible">
+                        <AnimatedTree side="left" color={useColorModeValue('#38B2AC', '#4FD1C5')} />
+                        <AnimatedTree side="right" color={useColorModeValue('#38B2AC', '#4FD1C5')} />
+                        
+                        {formData.cover_image && (
+                          <MotionBox
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            overflow="hidden"
+                            position="relative"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 200,
+                              damping: 20,
+                              duration: 0.6
+                            }}
+                            whileHover={{
+                              scale: 1.05,
+                              transition: { duration: 0.2 }
+                            }}
+                            _before={{
+                              content: '""',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 100%)',
+                              zIndex: 1,
+                              opacity: 0,
+                              transition: '0.3s',
+                            }}
+                            _hover={{
+                              '&:before': {
+                                opacity: 1,
+                              }
+                            }}
                           >
-                            <TagLeftIcon as={FiImage} />
-                            <TagLabel>Preview</TagLabel>
-                          </Tag>
-                        </Box>
-                      )}
+                            <Image
+                              src={formData.cover_image}
+                              alt="Cover preview"
+                              width="full"
+                              height="300px"
+                              objectFit="cover"
+                              fallbackSrc="https://via.placeholder.com/300"
+                            />
+                            <Tag
+                              position="absolute"
+                              top={2}
+                              right={2}
+                              colorScheme="blue"
+                              zIndex={2}
+                            >
+                              <TagLeftIcon as={FiImage} />
+                              <TagLabel>Preview</TagLabel>
+                            </Tag>
+                          </MotionBox>
+                        )}
+                      </Box>
                     </GridItem>
 
                     <GridItem colSpan={12}>

@@ -39,12 +39,30 @@ const ImageUploader = ({ onUploadComplete, currentImageUrl = null }) => {
     };
     reader.readAsDataURL(file);
 
-    // Upload the image
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Call the callback with the file
       await onUploadComplete(file);
+
+      toast({
+        title: 'Upload complete',
+        description: 'Image has been uploaded successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Detailed error:', error);
+      setError(error.message);
+      toast({
+        title: 'Upload failed',
+        description: `Error: ${error.message}. Please try again or contact support if the issue persists.`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     } finally {
       setIsLoading(false);
     }

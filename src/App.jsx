@@ -51,6 +51,12 @@ const App = () => {
             <Route path="book/:bookId" element={<BookPage />} />
             <Route path="book/:bookId/details" element={<BookDetails />} />
             <Route path="category/:categoryId" element={<CategoryBooks />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="admin" element={<Dashboard />} />
+            <Route path="admin/books" element={<BookManager />} />
+            <Route path="admin/content" element={<ContentManager />} />
+            <Route path="admin/analytics" element={<Analytics />} />
+
             <Route
               path="/profile"
               element={
