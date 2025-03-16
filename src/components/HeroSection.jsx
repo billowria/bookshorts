@@ -4,7 +4,7 @@ import {
   Input, InputGroup, InputLeftElement, InputRightElement, 
   Tag, TagLabel, TagLeftIcon, Stack, useDisclosure,
   SlideFade, Fade, ScaleFade, useBreakpointValue,
-  HStack, keyframes, Image, AspectRatio
+  HStack, keyframes, Image, AspectRatio, useColorModeValue
 } from '@chakra-ui/react';
 import { FiSearch, FiArrowRight, FiBook, FiUsers, FiStar, FiBookOpen } from 'react-icons/fi';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
@@ -95,13 +95,34 @@ const HeroSection = ({ books = [] }) => {
     }
   }, [books]);
 
+  // Add color mode values
+  const bgGradient = useColorModeValue(
+    "linear-gradient(to right, #f6f9fc, #ffffff)",
+    "linear-gradient(to right, gray.900, gray.800)"
+  );
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+  const subTextColor = useColorModeValue('gray.600', 'gray.400');
+  const searchBg = useColorModeValue('white', 'gray.700');
+  const searchPlaceholderColor = useColorModeValue('gray.400', 'gray.500');
+  const statCardBg = useColorModeValue('white', 'gray.700');
+  const statIconColor = useColorModeValue('#4F46E5', '#A5B4FC');
+  const fadeGradient = useColorModeValue(
+    'linear(to-b, white, transparent)',
+    'linear(to-b, gray.800, transparent)'
+  );
+  const bottomFadeGradient = useColorModeValue(
+    'linear(to-t, white, transparent)',
+    'linear(to-t, gray.800, transparent)'
+  );
+
   return (
     <Box 
       ref={ref}
       position="relative" 
       h={{ base: 'auto', md: '85vh' }}
       minH="600px"
-      bgImage="linear-gradient(to right, #f6f9fc, #ffffff)"
+      bgImage={bgGradient}
       bgSize="cover"
       bgPosition="center"
       overflow="hidden"
@@ -115,7 +136,10 @@ const HeroSection = ({ books = [] }) => {
         w="full"
         h="full"
         style={{ y }}
-        bgGradient="linear(to-r, rgba(255,255,255,0.9), rgba(246,249,252,0.9))"
+        bgGradient={useColorModeValue(
+          "linear(to-r, rgba(255,255,255,0.9), rgba(246,249,252,0.9))",
+          "linear(to-r, rgba(26,32,44,0.9), rgba(23,25,35,0.9))"
+        )}
         _before={{
           content: '""',
           position: 'absolute',
@@ -124,7 +148,7 @@ const HeroSection = ({ books = [] }) => {
           right: 0,
           bottom: 0,
           bgImage: 'url("/images/pattern-dots.svg")',
-          opacity: 0.1,
+          opacity: useColorModeValue(0.1, 0.05),
           animation: `${floatAnimation} 20s linear infinite`
         }}
       />
@@ -144,7 +168,7 @@ const HeroSection = ({ books = [] }) => {
           alignItems="center"
         >
           {/* Left Content */}
-          <Flex direction="column" gap={8} color="gray.800" zIndex={2}>
+          <Flex direction="column" gap={8} color={textColor} zIndex={2}>
             <MotionBox
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -189,7 +213,7 @@ const HeroSection = ({ books = [] }) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
             >
-              <Text fontSize={{ base: 'lg', md: 'xl' }} color="gray.600">
+              <Text fontSize={{ base: 'lg', md: 'xl' }} color={subTextColor}>
                 Unlock key insights from best-selling books with expert-curated summaries, 
                 interactive learning tools, and personalized recommendations.
               </Text>
@@ -208,7 +232,7 @@ const HeroSection = ({ books = [] }) => {
                 boxShadow="xl"
                 borderRadius="full"
                 overflow="hidden"
-                bg="white"
+                bg={searchBg}
                 position="relative"
               >
                 <InputLeftElement 
@@ -216,7 +240,7 @@ const HeroSection = ({ books = [] }) => {
                   h="full"
                   pl={4}
                 >
-                  <Icon as={FiSearch} color="gray.400" boxSize={5} />
+                  <Icon as={FiSearch} color={searchPlaceholderColor} boxSize={5} />
                 </InputLeftElement>
                 <Input
                   placeholder="Search books, authors, or topics..."
@@ -226,9 +250,9 @@ const HeroSection = ({ books = [] }) => {
                   pl={12}
                   pr={32}
                   py={6}
-                  color="gray.800"
+                  color={textColor}
                   fontSize={{ base: 'md', md: 'lg' }}
-                  _placeholder={{ color: 'gray.400' }}
+                  _placeholder={{ color: searchPlaceholderColor }}
                   onFocus={onToggle}
                 />
                 <InputRightElement 
@@ -269,17 +293,17 @@ const HeroSection = ({ books = [] }) => {
                   <Flex 
                     align="center" 
                     gap={3}
-                    bg="white"
+                    bg={statCardBg}
                     p={4}
                     borderRadius="xl"
                     boxShadow="md"
                     _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
                     transition="all 0.2s"
                   >
-                    <Icon as={stat.icon} boxSize={6} color="#4F46E5" />
+                    <Icon as={stat.icon} boxSize={6} color={statIconColor} />
                     <Flex direction="column">
-                      <Text fontSize="2xl" fontWeight="700" color="gray.800">{stat.value}</Text>
-                      <Text fontSize="sm" color="gray.600">{stat.label}</Text>
+                      <Text fontSize="2xl" fontWeight="700" color={textColor}>{stat.value}</Text>
+                      <Text fontSize="sm" color={subTextColor}>{stat.label}</Text>
                     </Flex>
                   </Flex>
                 </MotionBox>
@@ -288,7 +312,7 @@ const HeroSection = ({ books = [] }) => {
 
             {/* Trending Categories */}
             <Flex direction="column" gap={4}>
-              <Text fontWeight="600" opacity={0.9}>Popular Categories:</Text>
+              <Text fontWeight="600" opacity={0.9} color={textColor}>Popular Categories:</Text>
               <Flex gap={3} wrap="wrap">
                 {categories.map((category, index) => (
                   <MotionBox
@@ -340,8 +364,6 @@ const HeroSection = ({ books = [] }) => {
                 pl={1}
                 borderRadius="xl"
               >
-             
-
                 {/* Top Fade */}
                 <Box
                   position="absolute"
@@ -349,7 +371,7 @@ const HeroSection = ({ books = [] }) => {
                   left={0}
                   right={0}
                   h="120px"
-                  bgGradient="linear(to-b, white, transparent)" 
+                  bgGradient={fadeGradient}
                   zIndex={2}
                   pointerEvents="none"
                   opacity={0.5}
@@ -362,7 +384,7 @@ const HeroSection = ({ books = [] }) => {
                   left={0}
                   right={0}
                   h="230px"
-                  bgGradient="linear(to-t, white, transparent)"
+                  bgGradient={bottomFadeGradient}
                   zIndex={2}
                   pointerEvents="none"
                   opacity={0.9}

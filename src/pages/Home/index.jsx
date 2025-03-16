@@ -43,54 +43,136 @@ const MotionBox = motion(Box);
 
 const DEFAULT_CATEGORY_IMAGE = 'https://yggftjdbznludnoqukzf.supabase.co/storage/v1/object/public/book-covers/s9i5s7r03n_1741745341926.jpg';
 
-const GenreCard = ({ id, title, to, imageUrl, onClick }) => (
-  <Link to={to} onClick={() => onClick && onClick(id)}>
-    <Box 
-      position="relative" 
-      overflow="hidden" 
-      borderRadius="xl" 
-      cursor="pointer"
-      h="200px"
-      transition="0.3s"
-      _hover={{ 
-        transform: 'translateY(-4px)',
-        shadow: 'xl'
-      }}
-    >
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        backgroundImage={`url(${imageUrl || DEFAULT_CATEGORY_IMAGE})`}
-        backgroundSize="cover"
-        backgroundPosition="center"
-      />
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        bg="blackAlpha.600"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        p={4}
+const GenreCard = ({ id, title, to, imageUrl, onClick }) => {
+  const textColor = useColorModeValue('white', 'white');
+  const glowColor = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)');
+  const overlayBg = useColorModeValue(
+    'linear(to-b, rgba(0,0,0,0.2), rgba(0,0,0,0.7))',
+    'linear(to-b, rgba(0,0,0,0.3), rgba(0,0,0,0.8))'
+  );
+  const hoverOverlayBg = 'rgba(0, 0, 0, 0.5)';
+  
+  return (
+    <Link to={to} onClick={() => onClick && onClick(id)}>
+      <MotionBox
+        position="relative"
+        overflow="hidden"
+        borderRadius="2xl"
+        cursor="pointer"
+        h="250px"
+        transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+        bg={useColorModeValue('white', 'gray.800')}
+        boxShadow="lg"
+        _hover={{
+          transform: 'translateY(-8px)',
+          boxShadow: `0 20px 30px -10px ${glowColor}`,
+        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.02 }}
       >
-        <Text 
-          fontSize="2xl" 
-          fontWeight="bold" 
-          color="white" 
-          textAlign="center"
+        {/* Background Image with Overlay */}
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          backgroundImage={`url(${imageUrl || DEFAULT_CATEGORY_IMAGE})`}
+          backgroundSize="cover"
+          backgroundPosition="center"
+          transition="transform 0.3s ease-in-out"
+          _groupHover={{ transform: 'scale(1.1)' }}
+        />
+        
+        {/* Gradient Overlay */}
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bgGradient={overlayBg}
+          transition="all 0.3s ease"
+          _groupHover={{
+            opacity: 0.9
+          }}
+        />
+
+        {/* Hover Black Overlay */}
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg={hoverOverlayBg}
+          opacity={0}
+          transition="opacity 0.3s ease"
+          zIndex={2}
+          _groupHover={{
+            opacity: 0.5
+          }}
+        />
+
+        {/* Content */}
+        <VStack
+          position="relative"
+          h="full"
+          justify="center"
+          p={6}
+          spacing={4}
+          zIndex={3}
         >
-          {title}
-        </Text>
-      </Box>
-    </Box>
-  </Link>
-);
+          <Icon 
+            as={FiBook} 
+            color={textColor} 
+            boxSize={10} 
+            transition="all 0.3s ease"
+            _groupHover={{ transform: 'scale(1.2) rotate(5deg)' }}
+          />
+          <Heading
+            size="lg"
+            color={textColor}
+            textAlign="center"
+            fontWeight="bold"
+            textTransform="capitalize"
+            textShadow="0 2px 4px rgba(0,0,0,0.3)"
+          >
+            {title}
+          </Heading>
+          
+          {/* Interactive Elements */}
+          <HStack
+            spacing={4}
+            opacity={0.8}
+            transform="translateY(20px)"
+            transition="all 0.3s ease"
+            _groupHover={{
+              opacity: 1,
+              transform: "translateY(0)"
+            }}
+          >
+            <Badge
+              colorScheme="whiteAlpha"
+              px={3}
+              py={1}
+              borderRadius="full"
+              textTransform="uppercase"
+              letterSpacing="wider"
+              fontSize="xs"
+              fontWeight="bold"
+              backdropFilter="blur(8px)"
+              bg="whiteAlpha.200"
+            >
+              Explore Now
+            </Badge>
+          </HStack>
+        </VStack>
+      </MotionBox>
+    </Link>
+  );
+};
 
 const FeaturedBookCard = ({ id, title, image, avgRating, isBookmarked, onBookmarkToggle, cardBg }) => {
   const handleClick = () => {
@@ -183,6 +265,9 @@ const Home = () => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const dealsBg = useColorModeValue('gray.100', 'gray.700');
   const toast = useToast();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpand = () => setIsExpanded(!isExpanded);
 
   useEffect(() => {
     console.log('Home: Effect started', { authLoading, userId: user?.id });
@@ -363,6 +448,7 @@ const Home = () => {
               <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={6}>
                 {categories
                   .filter(category => category.status)
+                  .slice(0, isExpanded ? categories.length : 6)
                   .map((category) => (
                     <GenreCard
                       key={category.id}
@@ -374,6 +460,11 @@ const Home = () => {
                     />
                   ))}
               </SimpleGrid>
+              {categories.length > 6 && (
+                <Button mt={4} onClick={toggleExpand} variant="link" colorScheme="blue">
+                  {isExpanded ? 'Show Less' : 'Show More'}
+                </Button>
+              )}
             </Box>
           )}
 

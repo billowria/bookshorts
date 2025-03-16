@@ -29,16 +29,19 @@ const PrevArrow = ({ onClick }) => (
     icon={<FiChevronLeft />}
     onClick={onClick}
     position="absolute"
-    left={-20}
+    left={-13}
     top="50%"
     transform="translateY(-50%)"
     zIndex={2}
     rounded="full"
-    bg="blue.500"
+    bg="rgba(49, 130, 206, 0.3)" // Translucent blue
     color="white"
     boxShadow="lg"
-    _hover={{ bg: 'blue.600' }}
-    size="lg"
+    _hover={{ 
+      bg: 'blue.500', // Solid blue on hover
+      transform: "translateY(-50%) scale(1.2)" 
+    }}    size="lg"
+    transition="all 0.2s ease"
   />
 );
 
@@ -47,17 +50,21 @@ const NextArrow = ({ onClick }) => (
     aria-label="Next slide"
     icon={<FiChevronRight />}
     onClick={onClick}
-    position="absolute"
-    right={-20}
+    position="absolute" 
+    right={-13}
     top="50%"
     transform="translateY(-50%)"
     zIndex={2}
     rounded="full"
-    bg="blue.500"
+    bg="rgba(49, 130, 206, 0.3)" // Translucent blue
     color="white"
     boxShadow="lg"
-    _hover={{ bg: 'blue.600' }}
+    _hover={{ 
+      bg: 'blue.500', // Solid blue on hover
+      transform: "translateY(-50%) scale(1.2)" 
+    }}
     size="lg"
+    transition="all 0.2s ease"
   />
 );
 
@@ -71,6 +78,8 @@ const BookCard = motion(React.forwardRef(({ book, isBookmarked, onBookmarkToggle
   return (
     <Box ref={ref} {...props}>
       <VStack
+        as={RouterLink}
+        to={`/book/${book.id}`}
         spacing={0}
         align="stretch"
         bg={cardBg}
@@ -129,9 +138,8 @@ const BookCard = motion(React.forwardRef(({ book, isBookmarked, onBookmarkToggle
               right={0}
               bottom={0}
               bg="linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 100%)"
-              opacity={0}
+              opacity={1}
               transition="opacity 0.3s"
-              _groupHover={{ opacity: 1 }}
             />
           </Box>
         </AspectRatio>
@@ -183,49 +191,26 @@ const BookCard = motion(React.forwardRef(({ book, isBookmarked, onBookmarkToggle
             {book.author || 'Unknown Author'}
           </Text>
 
-          <HStack 
-            position="absolute" 
-            bottom={3} 
-            left={3} 
+          <IconButton
+            position="absolute"
+            bottom={3}
             right={3}
-            justify="space-between"
-          >
-            <Button
-              as={RouterLink}
-              to={`/book/${book.id}`}
-              size="sm"
-              colorScheme="blue"
-              leftIcon={<FiEye />}
-              flex={1}
-              opacity={0}
-              transform="translateY(10px)"
-              _groupHover={{ 
-                opacity: 1, 
-                transform: "translateY(0)",
-              }}
-              transition="all 0.3s ease"
-            >
-              View
-            </Button>
-            <IconButton
-              icon={<FiBookmark />}
-              size="sm"
-              aria-label="Bookmark"
-              onClick={(e) => {
-                e.preventDefault();
-                onBookmarkToggle(book.id);
-              }}
-              colorScheme={isBookmarked ? 'purple' : 'gray'}
-              variant={isBookmarked ? 'solid' : 'outline'}
-              opacity={0}
-              transform="translateY(10px)"
-              _groupHover={{ 
-                opacity: 1, 
-                transform: "translateY(0)",
-              }}
-              transition="all 0.3s ease 0.1s"
-            />
-          </HStack>
+            icon={<FiBookmark />}
+            size="sm"
+            aria-label="Bookmark"
+            onClick={(e) => {
+              e.preventDefault();
+              onBookmarkToggle(book.id);
+            }}
+            colorScheme={isBookmarked ? 'purple' : 'gray'}
+            variant={isBookmarked ? 'solid' : 'outline'}
+            opacity={0.8}
+            _groupHover={{ 
+              opacity: 1,
+              transform: "scale(1.1)",
+            }}
+            transition="all 0.3s ease"
+          />
         </VStack>
 
         {/* Train ticket bottom strip with animation */}
@@ -260,13 +245,13 @@ function FeaturedBooksCarousel({ books, bookmarks, onBookmarkToggle }) {
   const settings = {
     dots: true,
     infinite: true,
-    speed:2500,
+    speed:1000,
     slidesToShow: slidesToShow,
     slidesToScroll: 1,
     prevArrow: <PrevArrow />,
     nextArrow: <NextArrow />,
     autoplay: true,
-    autoplaySpeed: 500,
+    autoplaySpeed: 2000,
     cssEase: "linear",
     pauseOnHover: true,
     responsive: [
