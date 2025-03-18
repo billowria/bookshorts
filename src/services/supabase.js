@@ -92,7 +92,7 @@ export const fetchCategories = async () => {
       .select('id, name, display_order, status, image_url, click_count')
       .eq('status', true)
       .order('display_order', { ascending: true })
-      ;
+      .limit(6);
 
     if (error) {
       console.error('fetchCategories: Error:', error);
@@ -126,7 +126,8 @@ export const fetchFeaturedBooks = async () => {
         )
       `)
       .eq('status', true)
-      .order('avg_rating', { ascending: false });
+      .order('avg_rating', { ascending: false })
+      .limit(5);
 
     if (error) {
       console.error('fetchFeaturedBooks: Error:', error);
@@ -137,6 +138,65 @@ export const fetchFeaturedBooks = async () => {
     return { data, error: null };
   } catch (error) {
     console.error('fetchFeaturedBooks: Error:', error);
+    return { data: null, error };
+  }
+};
+
+// Function to fetch Likhari categories
+export const fetchLikhariCategories = async () => {
+  try {
+    console.log('[Likhari Categories] Waiting for session...');
+    await initializeSession();
+    
+    console.log('[Likhari Categories] Fetching...');
+    const { data, error } = await supabase
+      .from('likhari_categories')
+      .select('id, name, description, image_url, created_at')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('fetchLikhariCategories: Error:', error);
+      throw error;
+    }
+    
+    console.log('fetchLikhariCategories: Success');
+    return { data, error: null };
+  } catch (error) {
+    console.error('fetchLikhariCategories: Error:', error);
+    return { data: null, error };
+  }
+};
+
+// Function to fetch featured Likhari books
+export const fetchFeaturedLikhariBooks = async () => {
+  try {
+    console.log('fetchFeaturedLikhariBooks: Starting fetch', supabase);
+    const { data, error } = await supabase
+      .from('likhari_books')
+      .select(`
+        id, 
+        title, 
+        cover_image_url, 
+        status,
+        excerpt,
+        category_id,
+        category:category_id (
+          name
+        )
+      `)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('fetchFeaturedLikhariBooks: Error:', error);
+      throw error;
+    }
+    
+    console.log('fetchFeaturedLikhariBooks: Success');
+    return { data, error: null };
+  } catch (error) {
+    console.error('fetchFeaturedLikhariBooks: Error:', error);
     return { data: null, error };
   }
 };

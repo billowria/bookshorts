@@ -118,6 +118,13 @@ const Dashboard = () => {
       description: 'Manage book content and chapters'
     },
     {
+      title: 'Approval Manager',
+      icon: FiBook,
+      path: '/admin/approvals',
+      color: 'orange',
+      description: 'Manage content approval requests'
+    },
+    {
       title: 'Analytics',
       icon: FiBarChart2,
       path: '/admin/analytics',

@@ -38,7 +38,36 @@ const Login = () => {
   
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const accentColor = useColorModeValue('brand.500', 'brand.300');
+  const inputBg = useColorModeValue('gray.50', 'gray.700');
+  const inputFocusBg = useColorModeValue('gray.100', 'gray.600');
+
+  // Toast configurations
+  const adminToastConfig = {
+    status: 'success',
+    duration: 5000,
+    isClosable: true,
+    position: 'top',
+    colorScheme: 'red',
+    containerStyle: {
+      fontSize: 'xl',
+      textAlign: 'center',
+      width: '100%'
+    }
+  };
+
+  const userToastConfig = {
+    status: 'success',
+    duration: 3000,
+    isClosable: true,
+    position: 'top-right'
+  };
+
+  const errorToastConfig = {
+    status: 'error',
+    duration: 3000,
+    isClosable: true,
+    position: 'top-right'
+  };
 
   // If user is already logged in, redirect to the return URL or profile
   useEffect(() => {
@@ -62,22 +91,13 @@ const Login = () => {
           options: {
             data: {
               full_name: name,
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
             },
           }
         });
 
         if (signUpError) throw signUpError;
 
-        toast({
-          title: 'Account created!',
-          description: 'Please check your email to confirm your account.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-          position: 'top-right',
-        });
-
-        // Create a profile entry
         if (data?.user) {
           const { error: profileError } = await supabase
             .from('profiles')
@@ -85,19 +105,60 @@ const Login = () => {
               id: data.user.id,
               email: data.user.email,
               full_name: name,
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
               role: 'user',
-              created_at: new Date(),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'id',
+              ignoreDuplicates: false
             });
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-          }
+          if (profileError) throw profileError;
         }
 
-        // Reset form and switch to login
-        setIsSignUp(false);
+        // Show account creation success message
+        toast({
+          ...userToastConfig,
+          title: 'Account created!',
+          description: 'Please check your email to confirm your account.',
+          duration: 5000
+        });
+
+        // Sign in after successful signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', signInData.user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Navigate based on role
+        if (profileData?.role === 'admin') {
+          navigate('/admin');
+          // Show admin welcome message
+          toast({
+            ...adminToastConfig,
+            title: 'Welcome to Admin Dashboard'
+          });
+        } else {
+          navigate(location.state?.from || '/');
+          // Show regular user welcome message
+          toast({
+            ...userToastConfig,
+            title: `Welcome ${name}!`
+          });
+        }
       } else {
-        // Handle login
+        // Regular sign in
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -114,47 +175,29 @@ const Login = () => {
 
         if (profileError) throw profileError;
 
-        const isAdmin = profileData?.role === 'admin';
-
-   
-
-        // Redirect based on role
-        if (isAdmin) {
+        // Navigate and show welcome message based on role
+        if (profileData?.role === 'admin') {
           navigate('/admin');
           toast({
-            title: `Welcome  ${data.user.user_metadata?.full_name?.split(' ')[0] || 'User'}`,
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-            position: 'top',
-            colorScheme: 'red',
-            containerStyle: {
-              fontSize: 'xl',
-              textAlign: 'center',
-              width: '100%'
-            }
+            ...adminToastConfig,
+            title: 'Welcome to Admin Dashboard'
           });
         } else {
           navigate(location.state?.from || '/');
           toast({
-            title: `Welcome back, ${data.user.user_metadata?.full_name?.split(' ')[0] || 'User'}`,
-            status: 'success',
-            duration: 3000,
-            isClosable: true,
-            position: 'top-right'
+            ...userToastConfig,
+            title: `Welcome back, ${data.user.user_metadata?.full_name?.split(' ')[0] || 'User'}!`
           });
         }
       }
     } catch (error) {
       console.error(`Error ${isSignUp ? 'signing up' : 'signing in'}:`, error);
       setError(error.message);
+      // Show error message
       toast({
+        ...errorToastConfig,
         title: 'Error',
-        description: error.message,
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-        position: 'top-right',
+        description: error.message
       });
     } finally {
       setLoading(false);
@@ -167,20 +210,125 @@ const Login = () => {
   };
 
   return (
-    <Container maxW="container.sm" py={8}>
-      <Box
-        bg={bgColor}
-        p={8}
-        borderRadius="xl"
-        borderWidth="1px"
-        borderColor={borderColor}
-        shadow="lg"
+    <MotionBox
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container
+        as={SimpleGrid}
+        maxW="7xl"
+        columns={{ base: 1, md: 2 }}
+        spacing={{ base: 10, lg: 32 }}
+        py={{ base: 10, sm: 20 }}
       >
-        <VStack spacing={6}>
-          <Heading size="xl">{isSignUp ? 'Create Account' : 'Welcome Back'}</Heading>
-          <Text color="gray.500">
-            {isSignUp ? 'Sign up to get started' : 'Sign in to access your account'}
-          </Text>
+        {/* Left Side - Welcome Content */}
+        <Stack spacing={{ base: 10, md: 20 }}>
+          <MotionBox
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+          >
+            <Heading
+              lineHeight={1.1}
+              fontSize={{ base: '3xl', sm: '4xl', md: '5xl', lg: '6xl' }}
+              bgGradient="linear(to-r, blue.400, purple.500)"
+              bgClip="text"
+            >
+              Welcome to{' '}
+              <Text
+                as={'span'}
+                bgGradient="linear(to-r, purple.500, pink.400)"
+                bgClip="text"
+              >
+                BookShorts
+              </Text>
+            </Heading>
+            <Text
+              fontSize={{ base: 'md', sm: 'lg', md: 'xl' }}
+              color={mutedColor}
+              mt={5}
+            >
+              Join our community of book lovers and discover insights from the world's best books.
+              Get access to expert summaries and engage with fellow readers.
+            </Text>
+          </MotionBox>
+
+          <MotionBox
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.7 }}
+          >
+            <Stack direction={'row'} spacing={4} align={'center'}>
+              <AvatarGroup>
+                {avatars.map((avatar) => (
+                  <Avatar
+                    key={avatar.name}
+                    name={avatar.name}
+                    src={avatar.url}
+                    size={useBreakpointValue({ base: 'md', md: 'lg' })}
+                    position={'relative'}
+                    zIndex={2}
+                    _before={{
+                      content: '""',
+                      width: 'full',
+                      height: 'full',
+                      rounded: 'full',
+                      transform: 'scale(1.125)',
+                      bgGradient: 'linear(to-bl, purple.400,pink.400)',
+                      position: 'absolute',
+                      zIndex: -1,
+                      top: 0,
+                      left: 0,
+                    }}
+                  />
+                ))}
+              </AvatarGroup>
+              <Text fontSize={{ base: 'md', md: 'lg' }} color={mutedColor}>
+                +2.5k readers joined this month
+              </Text>
+            </Stack>
+          </MotionBox>
+        </Stack>
+
+        {/* Right Side - Login/Signup Form */}
+        <MotionFlex
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.7 }}
+          direction="column"
+          bg={bgColor}
+          rounded="xl"
+          p={{ base: 8, sm: 10 }}
+          spacing={8}
+          boxShadow="xl"
+          borderWidth="1px"
+          borderColor={borderColor}
+          sx={{
+            '&:hover': { boxShadow: '2xl' },
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <Stack spacing={6}>
+            <Heading
+              color={textColor}
+              lineHeight={1.1}
+              fontSize={{ base: '2xl', sm: '3xl', md: '4xl' }}
+            >
+              {isSignUp ? 'Create Account' : 'Sign in to your account'}
+              <Text
+                as={'span'}
+                bgGradient="linear(to-r, purple.400,pink.400)"
+                bgClip="text"
+                fontSize="xl"
+                display="block"
+                mt={2}
+              >
+                {isSignUp ? 'Join our community today' : 'Enjoy unlimited access to book summaries'}
+              </Text>
+            </Heading>
+          </Stack>
 
           <form onSubmit={handleSubmit} style={{ width: '100%' }}>
             <VStack spacing={4} align="stretch">

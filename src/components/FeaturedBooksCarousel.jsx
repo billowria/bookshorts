@@ -153,7 +153,7 @@ const BookCard = motion(React.forwardRef(({ book, isBookmarked, onBookmarkToggle
               borderRadius="full"
               fontSize="xs"
             >
-              {book.category || 'Fiction'}
+              {book.category?.name || 'Fiction'}
             </Badge>
             <Badge
               display="flex"

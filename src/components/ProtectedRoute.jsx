@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Box, Spinner, VStack, Text, Container, Alert, AlertIcon } from '@chakra-ui/react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, loading, error, isAdmin } = useAuth();

@@ -396,102 +396,107 @@ const HeroSection = ({ books = [] }) => {
                     {visibleBooks.map((book, index) => (
                       <MotionBox
                         key={`${book.id}-${index}`}
-                        mb={4}
-                        initial={{ opacity: 0.5, scale: 0.95 }}
-                        whileInView={{ 
-                          opacity: 1, 
-                          scale: 1,
-                          transition: { duration: 0.3 } 
+                        mb={6}
+                        position="relative"
+                        w="240px"
+                        h="360px"
+                        overflow="hidden"
+                        bg="rgba(0, 178, 255, 0.1)"
+                        transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                        transform="perspective(1000px)"
+                        boxShadow="0 8px 25px -5px rgba(0, 178, 255, 0.3)"
+                        sx={{
+                          '--card-radius': 'var(--chakra-radii-2xl)',
+                          borderRadius: 'var(--card-radius)'
                         }}
-                        viewport={{ 
-                          margin: "-45% 0px -45% 0px",
-                          once: false
+                        _before={{
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.8) 100%)',
+                          zIndex: 1,
+                          opacity: 1
+                        }}
+                        _hover={{
+                          transform: 'perspective(1000px) rotateX(5deg) scale(1.05)',
+                          boxShadow: '0 20px 40px -10px rgba(0, 178, 255, 0.4)',
+                          '& img': {
+                            transform: 'scale(1.1)'
+                          }
                         }}
                       >
-                        <Box
-                          as={Link}
-                          to={`/book/${book.id}`}
-                          p={3}
-                          bg="white"
-                          borderRadius="xl"
-                          boxShadow="sm"
-                          position="relative"
-                          overflow="hidden"
-                          h="90px"
-                          role="group"
-                          transition="all 0.3s"
-                          _hover={{
-                            transform: 'translateX(8px)',
-                            boxShadow: 'md',
-                          }}
-                          sx={{
-                            '&[data-active="true"]': {
-                              transform: 'scale(1.05)',
-                              boxShadow: 'lg',
-                            }
-                          }}
-                        >
-                          <Flex gap={3} h="full" align="center">
-                            {/* Book Cover */}
-                            <AspectRatio ratio={2/3} w="45px" h="70px" flexShrink={0}>
-                              <Box
-                                borderRadius="md"
-                                overflow="hidden"
-                                boxShadow="sm"
-                                bg="gray.100"
-                              >
-                                <Image
-                                  src={book.image_url || book.cover_image || "/images/book-placeholder.jpg"}
-                                  alt={book.title}
-                                  w="full"
-                                  h="full"
-                                  objectFit="cover"
-                                  transition="transform 0.3s"
-                                  _groupHover={{ transform: 'scale(1.1)' }}
-                                />
-                              </Box>
-                            </AspectRatio>
+                        {/* Book Cover Image */}
+                        <Image
+                          src={book.image_url || book.cover_image || "/images/book-placeholder.jpg"}
+                          alt={book.title}
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          w="full"
+                          h="full"
+                          objectFit="cover"
+                          transition="transform 0.5s"
+                        />
 
-                            {/* Book Details */}
-                            <Flex direction="column" flex={1} justify="center" h="full">
-                              <Box mb="auto">
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="600"
-                                  color="gray.800"
-                                  noOfLines={2}
-                                  lineHeight="shorter"
-                                >
-                                  {book.title}
+                        {/* Overlay Content */}
+                        <Flex
+                          className="book-info"
+                          position="absolute"
+                          bottom={0}
+                          left={0}
+                          right={0}
+                          direction="column"
+                          p={6}
+                          color="white"
+                          zIndex={2}
+                          opacity={1}
+                          transform="translateY(0)"
+                          bgGradient="linear(to-t, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)"
+                        >
+                          <Text
+                            fontSize="xl"
+                            fontWeight="700"
+                            mb={2}
+                            noOfLines={2}
+                            textShadow="0 2px 4px rgba(0,0,0,0.3)"
+                          >
+                            {book.title}
+                          </Text>
+                          <Text
+                            fontSize="md"
+                            fontWeight="500"
+                            mb={3}
+                            opacity={0.9}
+                          >
+                            {book.author}
+                          </Text>
+                          <Flex justify="space-between" align="center">
+                            <Text
+                              px={3}
+                              py={1}
+                              fontSize="sm"
+                              fontWeight="600"
+                              bg="rgba(255,255,255,0.2)"
+                              borderRadius="full"
+                              backdropFilter="blur(4px)"
+                            >
+                              {book.category?.name || 'General'}
+                            </Text>
+                            {book.avg_rating && (
+                              <HStack 
+                                spacing={1}
+                                px={3}
+                                py={1}
+                                bg="rgba(255,255,255,0.2)"
+                                borderRadius="full"
+                                backdropFilter="blur(4px)"
+                              >
+                                <Icon as={FiStar} color="yellow.400" boxSize={4} />
+                                <Text fontSize="sm" fontWeight="700">
+                                  {book.avg_rating.toFixed(1)}
                                 </Text>
-                                <Text
-                                  fontSize="xs"
-                                  color="gray.500"
-                                  mt={0.5}
-                                  noOfLines={1}
-                                >
-                                  {book.author}
-                                </Text>
-                              </Box>
-                              
-                              <HStack spacing={2} mt={1}>
-                                <Text
-                                  fontSize="xs"
-                                  color="purple.600"
-                                  fontWeight="500"
-                                >
-                                  {book.category}
-                                </Text>
-                                {book.avg_rating && (
-                                  <HStack spacing={0.5} color="yellow.500">
-                                    <Icon as={FiStar} boxSize={3} />
-                                    <Text fontSize="xs" fontWeight="600">
-                                      {book.avg_rating.toFixed(1)}
-                                    </Text>
-                                  </HStack>
-                                )}
                               </HStack>
-                            </Flex>
+                            )}
                           </Flex>
                         </Box>
                       </MotionBox>

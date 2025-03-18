@@ -109,7 +109,7 @@ const BookItem = ({ book, isBookmarked, onBookmarkToggle }) => {
                   py={1}
                   borderRadius="full"
                 >
-                  {book.category}
+                  {book.category?.name || 'General'}
                 </Badge>
               )}
             </HStack>

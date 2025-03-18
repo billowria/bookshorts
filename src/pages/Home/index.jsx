@@ -172,18 +172,28 @@ const FeaturedBookCard = ({ id, title, image, avgRating, isBookmarked, onBookmar
 };
 
 const Home = () => {
+  // State hooks
   const [categories, setCategories] = useState([]);
   const [featuredBooks, setFeaturedBooks] = useState([]);
   const [bookmarks, setBookmarks] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Context hooks
   const { user, loading: authLoading } = useAuth();
+  const toast = useToast();
+
+  // Color mode hooks
   const bgGradient = useColorModeValue('gray.50', 'gray.900');
   const headerBg = useColorModeValue('white', 'gray.800');
   const cardBg = useColorModeValue('white', 'gray.800');
   const dealsBg = useColorModeValue('gray.100', 'gray.700');
-  const toast = useToast();
 
+  // Memoized values
+  const toggleExpand = React.useCallback(() => setIsExpanded(!isExpanded), [isExpanded]);
+
+  // Effects
   useEffect(() => {
     console.log('Home: Effect started', { authLoading, userId: user?.id });
     
@@ -388,6 +398,67 @@ const Home = () => {
               />
             </Box>
           )}
+
+          {/* Likhari Portal Promo Section */}
+          <Box
+            width="100%"
+            bg={useColorModeValue('brand.50', 'gray.800')}
+            borderRadius="2xl"
+            p={8}
+            position="relative"
+            overflow="hidden"
+          >
+            <Box
+              position="absolute"
+              top={0}
+              right={0}
+              width="40%"
+              height="100%"
+              bgGradient="linear(to-l, brand.500, transparent)"
+              opacity={0.1}
+            />
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align="center"
+              justify="space-between"
+              gap={6}
+            >
+              <Stack spacing={4} maxW="600px">
+                <Heading size="xl" bgGradient="linear(to-r, brand.400, brand.600)" bgClip="text">
+                  Likhari Portal
+                </Heading>
+                <Text fontSize="lg" color={useColorModeValue('gray.600', 'gray.300')}>
+                  Share your creative voice with the world. Write and publish your books and shayari on our new Likhari Portal.
+                </Text>
+                <HStack spacing={4}>
+                  <Button
+                    as={Link}
+                    to="/likhari/write"
+                    size="lg"
+                    colorScheme="brand"
+                    leftIcon={<Icon as={FiBook} />}
+                  >
+                    Start Writing
+                  </Button>
+                  <Button
+                    as={Link}
+                    to="/likhari"
+                    size="lg"
+                    variant="outline"
+                    colorScheme="brand"
+                  >
+                    Explore Portal
+                  </Button>
+                </HStack>
+              </Stack>
+              <Icon
+                as={FiBook}
+                boxSize={24}
+                color="brand.500"
+                opacity={0.2}
+              />
+            </Flex>
+          </Box>
 
           {/* Exclusive Deals Section */}
           <Box
